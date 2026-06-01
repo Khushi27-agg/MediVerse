@@ -44,7 +44,7 @@ export default function Home() {
     <div className="page home">
       <div className="welcome-banner">
         <div className="welcome-text">
-          <h1>Welcome back, <span className="name-highlight">{user?.name}</span> 👋</h1>
+          <h1>Welcome back 👋</h1>
           <p>{isDoctor ? 'Manage your patients and appointments.' : 'Your health, simplified. Here\'s your overview.'}</p>
           <span className="role-pill">{isDoctor ? '👨‍⚕️ Doctor' : '🤒 Patient'}</span>
         </div>
