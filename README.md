@@ -113,7 +113,7 @@ MediVerse/
 ### Clone Repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/MediVerse.git
+git clone https://github.com/Khushi27-agg/MediVerse.git
 ```
 
 ### Backend Setup
