@@ -1,106 +1,206 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useAuth } from '../context/AuthContext'
+import { medicalAPI, authAPI } from '../api'
 import './MedicalRecords.css'
 
-const records = [
-  { id: 1, type: 'Lab Report', title: 'Complete Blood Count (CBC)', date: 'May 15, 2026', doctor: 'Dr. Priya Sharma', status: 'Normal', category: 'lab' },
-  { id: 2, type: 'Prescription', title: 'Hypertension Medication', date: 'May 10, 2026', doctor: 'Dr. Arjun Mehta', status: 'Active', category: 'prescription' },
-  { id: 3, type: 'Radiology', title: 'Chest X-Ray', date: 'Apr 28, 2026', doctor: 'Dr. Sneha Patel', status: 'Clear', category: 'imaging' },
-  { id: 4, type: 'Lab Report', title: 'Lipid Panel', date: 'Apr 20, 2026', doctor: 'Dr. Priya Sharma', status: 'Borderline', category: 'lab' },
-  { id: 5, type: 'Prescription', title: 'Vitamin D3 Supplement', date: 'Apr 5, 2026', doctor: 'Dr. Rahul Gupta', status: 'Completed', category: 'prescription' },
-  { id: 6, type: 'Vaccination', title: 'COVID-19 Booster', date: 'Mar 12, 2026', doctor: 'General Clinic', status: 'Done', category: 'vaccine' },
-  { id: 7, type: 'Radiology', title: 'MRI Brain Scan', date: 'Feb 20, 2026', doctor: 'Dr. Sneha Patel', status: 'Normal', category: 'imaging' },
-  { id: 8, type: 'Lab Report', title: 'Thyroid Function Test', date: 'Jan 15, 2026', doctor: 'Dr. Anita Rao', status: 'Abnormal', category: 'lab' },
-]
-
-const allergies = ['Penicillin', 'Sulfa drugs', 'Pollen (seasonal)']
-const conditions = ['Hypertension (managed)', 'Mild Vitamin D deficiency']
-const bloodInfo = { group: 'B+', pressure: '120/80', sugar: '108 mg/dL', weight: '65 kg', height: '165 cm' }
-
-const catIcons = { lab: '🧪', prescription: '📄', imaging: '🔬', vaccine: '💉' }
-const statusColors = {
-  Normal: 'badge-green', Active: 'badge-blue', Clear: 'badge-green',
-  Borderline: 'badge-yellow', Completed: 'badge-green', Done: 'badge-green', Abnormal: 'badge-red'
-}
-
 export default function MedicalRecords() {
-  const [category, setCategory] = useState('all')
+  const { user } = useAuth()
+  const isDoctor = user?.role === 'doctor'
 
-  const filtered = category === 'all' ? records : records.filter(r => r.category === category)
+  const [records, setRecords] = useState([])
+  const [patients, setPatients] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [showModal, setShowModal] = useState(false)
+  const [editRecord, setEditRecord] = useState(null)
+  const [form, setForm] = useState({ patientId: '', patientName: '', diagnosis: '', notes: '', date: '' })
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState('')
+
+  const load = async () => {
+    try {
+      setLoading(true)
+      const [recRes] = await Promise.all([
+        medicalAPI.getAll(),
+        isDoctor ? authAPI.getPatients().then(r => setPatients(r.data)) : Promise.resolve(),
+      ])
+      setRecords(recRes.data)
+    } catch {
+      setError('Failed to load records.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => { load() }, [])
+
+  const openAdd = () => {
+    setEditRecord(null)
+    setForm({ patientId: '', patientName: '', diagnosis: '', notes: '', date: new Date().toISOString().split('T')[0] })
+    setError('')
+    setShowModal(true)
+  }
+
+  const openEdit = r => {
+    setEditRecord(r)
+    setForm({ patientId: r.patientId, patientName: r.patientName, diagnosis: r.diagnosis, notes: r.notes, date: r.date })
+    setError('')
+    setShowModal(true)
+  }
+
+  const handleSubmit = async e => {
+    e.preventDefault()
+    setSubmitting(true)
+    setError('')
+    try {
+      if (editRecord) {
+        await medicalAPI.update(editRecord._id, { diagnosis: form.diagnosis, notes: form.notes, date: form.date })
+      } else {
+        const selectedPatient = patients.find(p => p._id === form.patientId)
+        await medicalAPI.create({ ...form, patientName: selectedPatient?.name || '' })
+      }
+      setShowModal(false)
+      load()
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to save record.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const handleDelete = async id => {
+    if (!confirm('Delete this record?')) return
+    try {
+      await medicalAPI.delete(id)
+      load()
+    } catch {
+      alert('Failed to delete record.')
+    }
+  }
 
   return (
     <div className="page">
-      <h1 className="page-title">Medical Records</h1>
-      <p className="page-subtitle">Your complete health history in one place</p>
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">Medical Records</h1>
+          <p className="page-subtitle">
+            {isDoctor ? 'Create and manage patient records' : 'Your medical history'}
+          </p>
+        </div>
+        {isDoctor && (
+          <button className="btn btn-primary" onClick={openAdd}>+ Add Record</button>
+        )}
+      </div>
 
-      <div className="records-layout">
-        <div className="records-main">
-          <div className="cat-filters">
-            {[['all','All Records','📋'], ['lab','Lab Reports','🧪'], ['prescription','Prescriptions','📄'], ['imaging','Imaging','🔬'], ['vaccine','Vaccines','💉']].map(([val, label, icon]) => (
-              <button
-                key={val}
-                className={`cat-btn ${category === val ? 'active' : ''}`}
-                onClick={() => setCategory(val)}
-              >
-                {icon} {label}
-              </button>
-            ))}
-          </div>
+      {error && !showModal && <div className="error-banner">{error}</div>}
 
-          <div className="records-list">
-            {filtered.map(r => (
-              <div key={r.id} className="card record-item">
-                <div className="record-icon">{catIcons[r.category]}</div>
-                <div className="record-info">
-                  <div className="record-type">{r.type}</div>
-                  <div className="record-title">{r.title}</div>
-                  <div className="record-meta">
-                    <span>📅 {r.date}</span>
-                    <span>👨‍⚕️ {r.doctor}</span>
-                  </div>
-                </div>
-                <div className="record-right">
-                  <span className={`badge ${statusColors[r.status]}`}>{r.status}</span>
-                  <button className="btn btn-outline" style={{ fontSize: 12, padding: '6px 12px', marginTop: 8 }}>
-                    View
-                  </button>
+      {loading ? (
+        <div className="loading-state">Loading records…</div>
+      ) : records.length === 0 ? (
+        <div className="empty-state">
+          <div className="empty-icon">📋</div>
+          <p>No medical records yet.</p>
+        </div>
+      ) : (
+        <div className="records-list">
+          {records.map(r => (
+            <div key={r._id} className="card record-item">
+              <div className="record-icon">📋</div>
+              <div className="record-info">
+                <div className="record-type">DIAGNOSIS</div>
+                <div className="record-title">{r.diagnosis}</div>
+                {r.notes && <div className="record-notes">{r.notes}</div>}
+                <div className="record-meta">
+                  {isDoctor && <span>🤒 {r.patientName}</span>}
+                  {r.doctorName && <span>👨‍⚕️ {r.doctorName}</span>}
+                  {r.date && <span>📅 {r.date}</span>}
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="records-side">
-          <div className="card health-profile">
-            <h3 className="side-title">🩸 Health Profile</h3>
-            <div className="health-profile-grid">
-              {Object.entries(bloodInfo).map(([key, val]) => (
-                <div key={key} className="hp-item">
-                  <div className="hp-label">{key.replace(/([A-Z])/g,' $1').replace(/^./,s=>s.toUpperCase())}</div>
-                  <div className="hp-value">{val}</div>
+              {isDoctor && (
+                <div className="record-actions">
+                  <button
+                    className="btn btn-outline"
+                    style={{ fontSize: 12, padding: '6px 12px' }}
+                    onClick={() => openEdit(r)}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    className="btn"
+                    style={{ fontSize: 12, padding: '6px 12px', background: '#fee2e2', color: '#991b1b' }}
+                    onClick={() => handleDelete(r._id)}
+                  >
+                    Delete
+                  </button>
                 </div>
-              ))}
+              )}
             </div>
-          </div>
+          ))}
+        </div>
+      )}
 
-          <div className="card allergies-card">
-            <h3 className="side-title">⚠️ Allergies</h3>
-            <div className="tag-list">
-              {allergies.map(a => (
-                <span key={a} className="badge badge-red">{a}</span>
-              ))}
+      {showModal && (
+        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>{editRecord ? 'Edit Record' : 'Add Medical Record'}</h2>
+              <button className="modal-close" onClick={() => setShowModal(false)}>✕</button>
             </div>
-          </div>
-
-          <div className="card conditions-card">
-            <h3 className="side-title">🏥 Existing Conditions</h3>
-            <div className="tag-list">
-              {conditions.map(c => (
-                <span key={c} className="badge badge-yellow">{c}</span>
-              ))}
-            </div>
+            {error && <div className="auth-error" style={{ marginBottom: 16 }}>{error}</div>}
+            <form onSubmit={handleSubmit} className="booking-form">
+              {!editRecord && (
+                <div className="form-group">
+                  <label>Patient</label>
+                  <select
+                    required
+                    value={form.patientId}
+                    onChange={e => setForm({ ...form, patientId: e.target.value })}
+                  >
+                    <option value="">Select patient…</option>
+                    {patients.map(p => (
+                      <option key={p._id} value={p._id}>{p.name} ({p.email})</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              <div className="form-group">
+                <label>Date</label>
+                <input
+                  type="date"
+                  value={form.date}
+                  onChange={e => setForm({ ...form, date: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label>Diagnosis *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Hypertension Stage 1"
+                  value={form.diagnosis}
+                  onChange={e => setForm({ ...form, diagnosis: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label>Notes</label>
+                <textarea
+                  placeholder="Additional notes, observations…"
+                  rows={4}
+                  value={form.notes}
+                  onChange={e => setForm({ ...form, notes: e.target.value })}
+                />
+              </div>
+              <div className="form-actions">
+                <button type="button" className="btn btn-outline" onClick={() => setShowModal(false)}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary" disabled={submitting}>
+                  {submitting ? 'Saving…' : editRecord ? 'Update Record' : 'Save Record'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }

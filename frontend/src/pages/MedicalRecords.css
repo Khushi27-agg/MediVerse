@@ -1,40 +1,3 @@
-.records-layout {
-  display: grid;
-  grid-template-columns: 1fr 280px;
-  gap: 24px;
-  align-items: start;
-}
-
-.cat-filters {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-}
-
-.cat-btn {
-  padding: 8px 16px;
-  border-radius: 20px;
-  border: 1.5px solid var(--border);
-  background: white;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.cat-btn:hover {
-  border-color: var(--primary);
-  color: var(--primary);
-}
-
-.cat-btn.active {
-  background: var(--primary);
-  border-color: var(--primary);
-  color: white;
-}
-
 .records-list {
   display: flex;
   flex-direction: column;
@@ -43,9 +6,9 @@
 
 .record-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 16px;
-  padding: 16px 20px;
+  padding: 18px 20px;
 }
 
 .record-icon {
@@ -60,23 +23,28 @@
   border-radius: 10px;
 }
 
-.record-info {
-  flex: 1;
-}
+.record-info { flex: 1; }
 
 .record-type {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--primary);
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-bottom: 2px;
+  margin-bottom: 4px;
 }
 
 .record-title {
-  font-weight: 600;
-  font-size: 15px;
+  font-weight: 700;
+  font-size: 16px;
   margin-bottom: 6px;
+}
+
+.record-notes {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  line-height: 1.5;
 }
 
 .record-meta {
@@ -84,86 +52,17 @@
   gap: 16px;
   font-size: 13px;
   color: var(--text-muted);
+  flex-wrap: wrap;
 }
 
-.record-right {
+.record-actions {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  gap: 4px;
+  gap: 8px;
   flex-shrink: 0;
 }
 
-.side-title {
-  font-size: 15px;
-  font-weight: 700;
-  margin-bottom: 16px;
-}
-
-.health-profile {
-  margin-bottom: 16px;
-}
-
-.health-profile-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.hp-item {
-  background: var(--bg);
-  border-radius: 8px;
-  padding: 10px 12px;
-}
-
-.hp-label {
-  font-size: 11px;
-  color: var(--text-muted);
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-  margin-bottom: 4px;
-}
-
-.hp-value {
-  font-weight: 700;
-  font-size: 15px;
-  color: var(--primary);
-}
-
-.allergies-card, .conditions-card {
-  margin-bottom: 16px;
-}
-
-.tag-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-@media (max-width: 1024px) {
-  .records-layout {
-    grid-template-columns: 1fr;
-  }
-  .records-side {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-  }
-  .health-profile, .allergies-card, .conditions-card {
-    margin-bottom: 0;
-  }
-}
-
-@media (max-width: 768px) {
-  .records-side {
-    grid-template-columns: 1fr;
-  }
-  .record-item {
-    flex-wrap: wrap;
-  }
-  .record-meta {
-    flex-direction: column;
-    gap: 4px;
-  }
+@media (max-width: 600px) {
+  .record-item { flex-wrap: wrap; }
+  .record-actions { flex-direction: row; }
 }

@@ -1,15 +1,29 @@
-import { Outlet, NavLink } from 'react-router-dom'
+import { Outlet, NavLink, useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 import './Layout.css'
 
-const navItems = [
-  { path: '/', label: 'Home', icon: '🏠' },
-  { path: '/appointments', label: 'Appointments', icon: '📅' },
-  { path: '/doctors', label: 'Doctors', icon: '👨‍⚕️' },
-  { path: '/records', label: 'Records', icon: '📋' },
-  { path: '/pharmacy', label: 'Pharmacy', icon: '💊' },
-]
-
 export default function Layout() {
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
+
+  const navItems = [
+    { path: '/', label: 'Home', icon: '🏠' },
+    { path: '/appointments', label: 'Appointments', icon: '📅' },
+    { path: '/doctors', label: 'Doctors', icon: '👨‍⚕️' },
+    { path: '/records', label: 'Records', icon: '📋' },
+    { path: '/prescriptions', label: 'Prescriptions', icon: '🩺' },
+    { path: '/pharmacy', label: 'Pharmacy', icon: '💊' },
+  ]
+
+  const handleLogout = () => {
+    logout()
+    navigate('/login')
+  }
+
+  const initials = user?.name
+    ? user.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+    : '?'
+
   return (
     <div className="layout">
       <header className="header">
@@ -32,7 +46,16 @@ export default function Layout() {
             ))}
           </nav>
           <div className="header-actions">
-            <div className="user-avatar">JD</div>
+            <div className="user-info">
+              <div className="user-details">
+                <span className="user-name">{user?.name}</span>
+                <span className="user-role">{user?.role}</span>
+              </div>
+              <div className="user-avatar">{initials}</div>
+            </div>
+            <button className="logout-btn" onClick={handleLogout} title="Logout">
+              ↪ Logout
+            </button>
           </div>
         </div>
       </header>

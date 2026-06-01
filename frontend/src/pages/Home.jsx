@@ -1,53 +1,54 @@
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
+import { appointmentsAPI } from '../api'
 import './Home.css'
-
-const stats = [
-  { label: 'Doctors Available', value: '120+', icon: '👨‍⚕️', color: '#0ea5e9' },
-  { label: 'Appointments Today', value: '48', icon: '📅', color: '#10b981' },
-  { label: 'Prescriptions', value: '12', icon: '💊', color: '#f59e0b' },
-  { label: 'Health Score', value: '92%', icon: '❤️', color: '#ef4444' },
-]
 
 const quickActions = [
   { label: 'Book Appointment', path: '/appointments', icon: '📅', desc: 'Schedule with a doctor', color: '#0ea5e9' },
   { label: 'Find Doctors', path: '/doctors', icon: '👨‍⚕️', desc: 'Browse specialists', color: '#10b981' },
   { label: 'Medical Records', path: '/records', icon: '📋', desc: 'View your history', color: '#8b5cf6' },
-  { label: 'Pharmacy', path: '/pharmacy', icon: '💊', desc: 'Order medicines', color: '#f59e0b' },
-]
-
-const upcomingAppointments = [
-  { doctor: 'Dr. Priya Sharma', specialty: 'Cardiologist', date: 'Jun 3, 2026', time: '10:00 AM', avatar: 'PS' },
-  { doctor: 'Dr. Arjun Mehta', specialty: 'Dermatologist', date: 'Jun 7, 2026', time: '2:30 PM', avatar: 'AM' },
+  { label: 'Prescriptions', path: '/prescriptions', icon: '🩺', desc: 'View prescriptions', color: '#f59e0b' },
 ]
 
 const healthTips = [
   { tip: 'Drink at least 8 glasses of water daily', icon: '💧' },
-  { tip: 'Get 7-8 hours of quality sleep each night', icon: '😴' },
+  { tip: 'Get 7–8 hours of quality sleep each night', icon: '😴' },
   { tip: 'Take a 30-minute walk every day', icon: '🚶' },
   { tip: 'Eat more fruits and vegetables', icon: '🥗' },
 ]
 
+const STATUS_COLORS = {
+  Pending: 'badge-yellow',
+  Approved: 'badge-green',
+  Cancelled: 'badge-red',
+  Completed: 'badge-blue',
+}
+
 export default function Home() {
+  const { user } = useAuth()
+  const isDoctor = user?.role === 'doctor'
+  const [appointments, setAppointments] = useState([])
+
+  useEffect(() => {
+    appointmentsAPI.getAll()
+      .then(r => setAppointments(r.data.slice(0, 3)))
+      .catch(() => {})
+  }, [])
+
+  const initials = user?.name
+    ? user.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+    : '?'
+
   return (
     <div className="page home">
       <div className="welcome-banner">
         <div className="welcome-text">
-          <h1>Welcome back, <span className="name-highlight">Jane Doe</span> 👋</h1>
-          <p>Your health, simplified. Here's your health overview for today.</p>
+          <h1>Welcome back, <span className="name-highlight">{user?.name}</span> 👋</h1>
+          <p>{isDoctor ? 'Manage your patients and appointments.' : 'Your health, simplified. Here\'s your overview.'}</p>
+          <span className="role-pill">{isDoctor ? '👨‍⚕️ Doctor' : '🤒 Patient'}</span>
         </div>
-        <div className="welcome-illustration">🏥</div>
-      </div>
-
-      <div className="grid-4" style={{ marginBottom: 32 }}>
-        {stats.map(s => (
-          <div key={s.label} className="card stat-card">
-            <div className="stat-icon" style={{ background: s.color + '20', color: s.color }}>
-              {s.icon}
-            </div>
-            <div className="stat-value" style={{ color: s.color }}>{s.value}</div>
-            <div className="stat-label">{s.label}</div>
-          </div>
-        ))}
+        <div className="welcome-avatar">{initials}</div>
       </div>
 
       <div className="home-grid">
@@ -68,24 +69,41 @@ export default function Home() {
             ))}
           </div>
 
-          <h2 className="section-title">Upcoming Appointments</h2>
-          <div className="appointments-list">
-            {upcomingAppointments.map(a => (
-              <div key={a.doctor} className="card appt-item">
-                <div className="appt-avatar">{a.avatar}</div>
-                <div className="appt-info">
-                  <div className="appt-doctor">{a.doctor}</div>
-                  <div className="appt-specialty">{a.specialty}</div>
+          <h2 className="section-title">Recent Appointments</h2>
+          {appointments.length === 0 ? (
+            <div className="card" style={{ padding: '32px', textAlign: 'center', color: 'var(--text-muted)' }}>
+              <div style={{ fontSize: 36, marginBottom: 8 }}>📅</div>
+              <p>No appointments yet.</p>
+              {!isDoctor && (
+                <Link to="/appointments" className="btn btn-primary" style={{ marginTop: 12, display: 'inline-flex' }}>
+                  Book your first appointment
+                </Link>
+              )}
+            </div>
+          ) : (
+            <div className="appointments-list">
+              {appointments.map(a => (
+                <div key={a._id} className="card appt-item">
+                  <div className="appt-avatar">
+                    {(isDoctor ? a.patientName : a.doctorName || 'Dr')
+                      .split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
+                  </div>
+                  <div className="appt-info">
+                    <div className="appt-doctor">
+                      {isDoctor ? a.patientName : (a.doctorName || 'Doctor TBD')}
+                    </div>
+                    <div className="appt-specialty">{a.reason || (isDoctor ? 'Patient' : 'Appointment')}</div>
+                  </div>
+                  <div className="appt-time">
+                    <div className="appt-date">{a.date}</div>
+                    {a.time && <div className="appt-hour">{a.time}</div>}
+                  </div>
+                  <span className={`badge ${STATUS_COLORS[a.status]}`}>{a.status}</span>
                 </div>
-                <div className="appt-time">
-                  <div className="appt-date">{a.date}</div>
-                  <div className="appt-hour">{a.time}</div>
-                </div>
-                <span className="badge badge-blue">Confirmed</span>
-              </div>
-            ))}
-            <Link to="/appointments" className="view-all-link">View all appointments →</Link>
-          </div>
+              ))}
+              <Link to="/appointments" className="view-all-link">View all appointments →</Link>
+            </div>
+          )}
         </div>
 
         <div className="home-side">
@@ -104,22 +122,17 @@ export default function Home() {
           <div className="card vitals-card">
             <h2 className="section-title" style={{ marginBottom: 16 }}>📊 My Vitals</h2>
             <div className="vitals-list">
-              <div className="vital-item">
-                <span className="vital-label">Blood Pressure</span>
-                <span className="vital-value good">120/80</span>
-              </div>
-              <div className="vital-item">
-                <span className="vital-label">Heart Rate</span>
-                <span className="vital-value good">72 bpm</span>
-              </div>
-              <div className="vital-item">
-                <span className="vital-label">Blood Sugar</span>
-                <span className="vital-value warn">108 mg/dL</span>
-              </div>
-              <div className="vital-item">
-                <span className="vital-label">BMI</span>
-                <span className="vital-value good">22.5</span>
-              </div>
+              {[
+                { label: 'Blood Pressure', val: '120/80', cls: 'good' },
+                { label: 'Heart Rate', val: '72 bpm', cls: 'good' },
+                { label: 'Blood Sugar', val: '108 mg/dL', cls: 'warn' },
+                { label: 'BMI', val: '22.5', cls: 'good' },
+              ].map(v => (
+                <div key={v.label} className="vital-item">
+                  <span className="vital-label">{v.label}</span>
+                  <span className={`vital-value ${v.cls}`}>{v.val}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>

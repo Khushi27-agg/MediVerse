@@ -1,0 +1,1 @@
+- [Backend binding fix](backend-binding.md) — Replit workflow health checker requires server to bind on 0.0.0.0, not "localhost", or it times out even when the server is running.
