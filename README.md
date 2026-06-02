@@ -15,6 +15,7 @@ The application provides appointment scheduling, patient record management, pres
 * Role-Based Access Control
 * Patient, Doctor, and Admin Roles
 * JWT Authentication
+* Video Consultation Integration
 
 ### Patient Features
 
@@ -175,7 +176,6 @@ npm run dev
 
 ## 🎯 Future Enhancements
 
-* Video Consultation Integration
 * Real-Time Notifications
 * PDF Prescription Downloads
 * Medical Report Uploads
