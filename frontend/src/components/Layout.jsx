@@ -1,28 +1,34 @@
-import { Outlet, NavLink, useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
-import './Layout.css'
+import { Outlet, NavLink, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import "./Layout.css";
 
 export default function Layout() {
-  const { user, logout } = useAuth()
-  const navigate = useNavigate()
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   const navItems = [
-    { path: '/', label: 'Home', icon: '🏠' },
-    { path: '/appointments', label: 'Appointments', icon: '📅' },
-    { path: '/doctors', label: 'Doctors', icon: '👨‍⚕️' },
-    { path: '/records', label: 'Records', icon: '📋' },
-    { path: '/prescriptions', label: 'Prescriptions', icon: '🩺' },
-    { path: '/pharmacy', label: 'Pharmacy', icon: '💊' },
-  ]
+    { path: "/", label: "Home", icon: "🏠" },
+    { path: "/appointments", label: "Appointments", icon: "📅" },
+    { path: "/doctors", label: "Doctors", icon: "👨‍⚕️" },
+    { path: "/records", label: "Records", icon: "📋" },
+    { path: "/prescriptions", label: "Prescriptions", icon: "🩺" },
+    { path: "/pharmacy", label: "Pharmacy", icon: "💊" },
+    { path: "/video-call", label: "Video Call", icon: "📹" },
+  ];
 
   const handleLogout = () => {
-    logout()
-    navigate('/login')
-  }
+    logout();
+    navigate("/login");
+  };
 
   const initials = user?.name
-    ? user.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
-    : '?'
+    ? user.name
+        .split(" ")
+        .map((w) => w[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase()
+    : "?";
 
   return (
     <div className="layout">
@@ -33,12 +39,14 @@ export default function Layout() {
             <span className="brand-name">MediVerse</span>
           </div>
           <nav className="nav">
-            {navItems.map(item => (
+            {navItems.map((item) => (
               <NavLink
                 key={item.path}
                 to={item.path}
-                end={item.path === '/'}
-                className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+                end={item.path === "/"}
+                className={({ isActive }) =>
+                  `nav-link ${isActive ? "active" : ""}`
+                }
               >
                 <span className="nav-icon">{item.icon}</span>
                 <span className="nav-label">{item.label}</span>
@@ -52,7 +60,11 @@ export default function Layout() {
               </div>
               <div className="user-avatar">{initials}</div>
             </div>
-            <button className="logout-btn" onClick={handleLogout} title="Logout">
+            <button
+              className="logout-btn"
+              onClick={handleLogout}
+              title="Logout"
+            >
               ↪ Logout
             </button>
           </div>
@@ -62,5 +74,5 @@ export default function Layout() {
         <Outlet />
       </main>
     </div>
-  )
+  );
 }
