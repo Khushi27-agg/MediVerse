@@ -10,7 +10,10 @@ const prescriptionRoutes = require("./routes/prescriptionRoutes");
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: "https://themediverse-khushi.netlify.app",
+  credentials: true
+}));
 app.use(express.json());
 
 app.use("/api/auth", authRoutes);
